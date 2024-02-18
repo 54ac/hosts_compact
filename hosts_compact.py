@@ -4,17 +4,20 @@ Reduces the amount of entries in a hosts file by assigning up to 9 hosts per lin
 
 This is a workaround for the DNS Client service in Windows causing networking issues when a large hosts file is present.
 Includes the base localhost entries unless OMIT_BASE is set to True.
+Includes a timestamp at the top of the file unless OMIT_TIMESTAMP is set to True.
 Arguments are optional and default to hosts and hosts_compacted. Output file will be overwritten if it exists.
 
 Usage:
     python hosts_compact.py [filename] [out_filename]
 """
 
+from datetime import datetime
 import sys
 
 DEFAULT_FILENAME = "hosts"
 DEFAULT_OUT_FILENAME = "hosts_compacted"
 OMIT_BASE = False  # Set to True to omit base entries in output file
+OMIT_TIMESTAMP = False  # Set to True to omit timestamp in first line of output file
 
 BASE_HOSTS = [
     "127.0.0.1 localhost localhost.localdomain local",
@@ -84,11 +87,18 @@ for i in range(0, len(domains_list), 9):
     if domains_chunk:
         compacted_hosts.append("0.0.0.0 " + " ".join(domains_chunk))
 
+out_hosts = compacted_hosts
+
 if OMIT_BASE is True:
-    out_hosts = compacted_hosts
     print("Base entries omitted.")
 else:
-    out_hosts = BASE_HOSTS + compacted_hosts
+    out_hosts = BASE_HOSTS + out_hosts
+
+if OMIT_TIMESTAMP is True:
+    print("Timestamp omitted.")
+else:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    out_hosts = ["# " + timestamp] + out_hosts
 
 try:
     with open(out_filename, "w") as file:
